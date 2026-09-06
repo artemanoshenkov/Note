@@ -4,10 +4,14 @@ class AddNewNoteUseCase(
     private val repository: NotesRepository
 ) {
 
-    operator fun invoke(
+    suspend operator fun invoke(
          title: String,
          content: String
     ) {
-        repository.addNewNote(title, content)
+        repository.addNewNote(
+            title=title,
+            content=content,
+            isPinned = false,
+            updateAt = System.currentTimeMillis())
     }
 }

@@ -1,0 +1,90 @@
+package com.example.note.presentation.screens.creations
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.note.data.NotesRepositoryImpl
+import com.example.note.data.TestNotesRepositoryImpl
+import com.example.note.domain.AddNewNoteUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+class CreateNoteViewModel(context: Context) : ViewModel() {
+
+    private val repository = NotesRepositoryImpl.getInstance(context)
+    private val addNoteUseCase = AddNewNoteUseCase(repository)
+
+    private val _state = MutableStateFlow<CreateNoteState>(CreateNoteState.Creation())
+    val state = _state.asStateFlow()
+
+    fun processCommand(command: CreateNoteCommand) {
+        when (command) {
+            CreateNoteCommand.Back -> {
+                _state.update { CreateNoteState.Finished }
+            }
+
+            is CreateNoteCommand.InputContent -> {
+                _state.update { previousState ->
+                    if (previousState is CreateNoteState.Creation) {
+                        previousState.copy(
+                            content = command.content,
+                            isSaveEnable = command.content.isNotBlank() && previousState.title.isNotBlank()
+                        )
+                    } else {
+                        CreateNoteState.Creation(content = command.content)
+                    }
+
+                }
+
+            }
+
+            is CreateNoteCommand.InputTitle -> {
+                _state.update { previousState ->
+                    if (previousState is CreateNoteState.Creation) {
+                        previousState.copy(
+                            title = command.title,
+                            isSaveEnable = previousState.content.isNotBlank() && command.title.isNotBlank()
+                        )
+                    } else {
+                        CreateNoteState.Creation(title = command.title)
+                    }
+
+                }
+            }
+
+            CreateNoteCommand.Save -> {
+                viewModelScope.launch {
+                    _state.update { previousState ->
+                        if (previousState is CreateNoteState.Creation) {
+                            val title = previousState.title
+                            val content = previousState.content
+                            addNoteUseCase(title = title, content = content)
+                            CreateNoteState.Finished
+                        } else {
+                            previousState
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+sealed interface CreateNoteCommand {
+    data class InputTitle(val title: String) : CreateNoteCommand
+    data class InputContent(val content: String) : CreateNoteCommand
+    data object Save : CreateNoteCommand
+    data object Back : CreateNoteCommand
+}
+
+sealed interface CreateNoteState {
+    data class Creation(
+        val title: String = "",
+        val content: String = "",
+        val isSaveEnable: Boolean = false
+    ) : CreateNoteState
+
+    data object Finished : CreateNoteState
+}
