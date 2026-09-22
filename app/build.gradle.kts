@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.note"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId = "com.example.note"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -63,4 +63,6 @@ dependencies {
     implementation(libs.androidx.room.runtime.v285)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.navigation.compose.v2101)
+
 }
