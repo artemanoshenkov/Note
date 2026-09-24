@@ -10,17 +10,22 @@ import com.example.note.domain.DeleteNoteUseCase
 import com.example.note.domain.EditeNoteUseCase
 import com.example.note.domain.GetNoteUseCase
 import com.example.note.domain.Note
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditNoteViewModel(private val idNote: Int, context: Context) : ViewModel() {
-
-    private val repository = NotesRepositoryImpl.getInstance(context)
-    private val editNoteUseCase = EditeNoteUseCase(repository)
-    private val getNoteUseCase = GetNoteUseCase(repository)
-    private val deleteNoteUseCase = DeleteNoteUseCase(repository)
+@HiltViewModel(assistedFactory = EditNoteViewModel.Factory::class)
+class EditNoteViewModel @AssistedInject constructor(
+    private val editNoteUseCase: EditeNoteUseCase,
+    private val getNoteUseCase: GetNoteUseCase,
+    private val deleteNoteUseCase: DeleteNoteUseCase,
+    @Assisted("idNote") private val idNote: Int,
+) : ViewModel() {
 
     private val _state = MutableStateFlow<EditNoteState>(EditNoteState.Initial)
     val state = _state.asStateFlow()
@@ -34,6 +39,7 @@ class EditNoteViewModel(private val idNote: Int, context: Context) : ViewModel()
 
         }
     }
+
     fun processCommand(command: EditNoteCommand) {
         when (command) {
             EditNoteCommand.Back -> {
@@ -94,6 +100,14 @@ class EditNoteViewModel(private val idNote: Int, context: Context) : ViewModel()
             }
         }
     }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            @Assisted("idNote") idNote: Int
+        ): EditNoteViewModel
+
+    }
 }
 
 sealed interface EditNoteCommand {
@@ -107,12 +121,12 @@ sealed interface EditNoteCommand {
 
 sealed interface EditNoteState {
 
-    data object Initial: EditNoteState
+    data object Initial : EditNoteState
     data class Editing(
         val note: Note,
     ) : EditNoteState {
         val isSaveEnable: Boolean
-            get()=note.title.isNotBlank() && note.content.isNotBlank()
+            get() = note.title.isNotBlank() && note.content.isNotBlank()
     }
 
     data object Finished : EditNoteState

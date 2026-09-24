@@ -15,6 +15,7 @@ import com.example.note.domain.GetNoteUseCase
 import com.example.note.domain.Note
 import com.example.note.domain.SearchNotesUseCase
 import com.example.note.domain.SwitchPinnedStatusUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,16 +28,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NotesViewModel(context: Context) : ViewModel() {
+@HiltViewModel
+class NotesViewModel @Inject constructor(
+    private val getAllNotes: GetAllNotesUseCase,
+    private val searchNote: SearchNotesUseCase,
+    private val switchPinnedStatus: SwitchPinnedStatusUseCase
+) : ViewModel() {
     /** Работа с репазиторием при получении команд */
-    private val repository = NotesRepositoryImpl.getInstance(context)
-
-
-    private val getAllNotes = GetAllNotesUseCase(repository)
-
-    private val searchNote = SearchNotesUseCase(repository)
-    private val switchPinnedStatus = SwitchPinnedStatusUseCase(repository)
 
     /** query поток данных для поиска Note */
     private val query = MutableStateFlow("")

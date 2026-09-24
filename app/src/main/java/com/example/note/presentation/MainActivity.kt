@@ -9,13 +9,14 @@ import androidx.activity.enableEdgeToEdge
 import com.example.note.presentation.navigation.NavGraph
 
 import com.example.note.presentation.ui.theme.NoteTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
             NoteTheme {
                 NavGraph()
             }

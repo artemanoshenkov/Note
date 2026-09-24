@@ -33,6 +33,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.note.presentation.utils.DateFormatter
 
@@ -40,10 +41,9 @@ import com.example.note.presentation.utils.DateFormatter
 fun EditNoteScreen(
     modifier: Modifier = Modifier,
     noteId: Int,
-    context: Context = LocalContext.current.applicationContext,
-    viewModel: EditNoteViewModel = viewModel{
+    viewModel: EditNoteViewModel = hiltViewModel{factory: EditNoteViewModel.Factory ->
         /** Для того что бы передать свойство  EditNoteViewModel можно воспользоваться лямда выражением */
-        EditNoteViewModel(noteId, context)
+        factory.create(idNote = noteId)
     },
     onFinished: () -> Unit
 ) {

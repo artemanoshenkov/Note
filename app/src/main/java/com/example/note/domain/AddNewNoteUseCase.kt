@@ -1,6 +1,8 @@
 package com.example.note.domain
 
-class AddNewNoteUseCase(
+import javax.inject.Inject
+
+class AddNewNoteUseCase @Inject constructor (
     private val repository: NotesRepository
 ) {
 

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.note.R
 import com.example.note.domain.Note
@@ -56,9 +57,7 @@ fun NotesScreen(
      * для импорта необходимо добавить зависимости в gradle..
      * https://developer.android.com/develop/ui/compose/libraries#viewmodel*/
     context: Context = LocalContext.current.applicationContext,
-    viewModel: NotesViewModel = viewModel{
-        NotesViewModel(context)
-    },
+    viewModel: NotesViewModel = hiltViewModel(),
     /** Для возможности перехода на другой экран используем колбек*/
     onNoteClick: (note: Note) -> Unit,
     onAddNoteButtonClick: () -> Unit
