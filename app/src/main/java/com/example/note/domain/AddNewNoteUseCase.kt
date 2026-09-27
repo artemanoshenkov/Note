@@ -8,7 +8,7 @@ class AddNewNoteUseCase @Inject constructor (
 
     suspend operator fun invoke(
          title: String,
-         content: String
+         content: List<ContentItem>
     ) {
         repository.addNewNote(
             title=title,

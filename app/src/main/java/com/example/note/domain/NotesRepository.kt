@@ -6,7 +6,7 @@ interface NotesRepository {
 
     suspend fun addNewNote(
         title: String,
-        content: String,
+        content: List<ContentItem>,
         updateAt: Long,
         isPinned: Boolean
     )

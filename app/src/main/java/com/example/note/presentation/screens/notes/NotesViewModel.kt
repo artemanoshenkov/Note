@@ -2,28 +2,17 @@
 
 package com.example.note.presentation.screens.notes
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.note.data.NotesRepositoryImpl
-import com.example.note.data.TestNotesRepositoryImpl
-import com.example.note.domain.AddNewNoteUseCase
-import com.example.note.domain.DeleteNoteUseCase
-import com.example.note.domain.EditeNoteUseCase
 import com.example.note.domain.GetAllNotesUseCase
-import com.example.note.domain.GetNoteUseCase
 import com.example.note.domain.Note
 import com.example.note.domain.SearchNotesUseCase
 import com.example.note.domain.SwitchPinnedStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update

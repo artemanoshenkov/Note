@@ -16,6 +16,11 @@ object DateFormatter {
         return formatter.format(System.currentTimeMillis())
 
     }
+
+    fun formatDateFromTimeMillis(timestamp: Long): String {
+        return formatter.format(timestamp)
+    }
+
     fun formateDateToString(timestamp: Long): String {
         val now = System.currentTimeMillis()
         val diff = now - timestamp

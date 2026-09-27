@@ -1,4 +1,5 @@
 package com.example.note.data
+
 /**создание базы данных*/
 import android.content.Context
 import androidx.room.Database
@@ -7,10 +8,11 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = arrayOf(NoteDbModel::class),
-    version = 1,
+    version = 2 /*при обновлении структуры базы данных указываем новую версию "2"
+    а при создании базы данных Room.databaseBuilder указываем стратегию (что делать при обновлении версии БД)*/,
     exportSchema = false
 )
-abstract class NotesDatabase: RoomDatabase() {
+abstract class NotesDatabase : RoomDatabase() {
 
     abstract fun notesDao(): NotesDao
 
@@ -21,12 +23,12 @@ abstract class NotesDatabase: RoomDatabase() {
 
         fun getInstance(context: Context): NotesDatabase {
 
-            if(instance != null) {
+            if (instance != null) {
                 return instance!!
             }
 
             synchronized(LOCK) {
-                if(instance != null) {
+                if (instance != null) {
                     return instance!!
                 }
 
@@ -34,7 +36,10 @@ abstract class NotesDatabase: RoomDatabase() {
                     context = context,
                     klass = NotesDatabase::class.java,
                     name = "notes.db"
-                ).build().also { instance = it }
+
+                ).fallbackToDestructiveMigration(dropAllTables = true)
+                    /*.fallbackToDestructiveMigration(dropAllTables = true) - миграции не нужно делать просто удалить старую БД и создать новую*/
+                    .build().also { instance = it }
             }
 
         }

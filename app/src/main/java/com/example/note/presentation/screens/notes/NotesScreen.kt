@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.note.R
+import com.example.note.domain.ContentItem
 import com.example.note.domain.Note
 import com.example.note.presentation.ui.theme.OtherNotesColors
 import com.example.note.presentation.ui.theme.PinnedNotesColors
@@ -308,16 +309,24 @@ fun NoteCard(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = note.content,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium,
-            maxLines = 3,
-            /** overflow - отвечает за стратегию что делать если текст вылез за пределы контейнера
-             * в данном случае добавляет многоточ... */
-            overflow = TextOverflow.Ellipsis
-        )
+
+        note.content
+            .filterIsInstance<ContentItem.Text>()
+            .map {
+                it.content
+            }
+            .joinToString("\n").let {
+                Text(
+                    text = it,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 3,
+                    /** overflow - отвечает за стратегию что делать если текст вылез за пределы контейнера
+                     * в данном случае добавляет многоточ... */
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
 
 //        Text(

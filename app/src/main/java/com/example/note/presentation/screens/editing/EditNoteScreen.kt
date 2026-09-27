@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.note.domain.ContentItem
 import com.example.note.presentation.utils.DateFormatter
 
 @Composable
@@ -139,37 +140,20 @@ fun EditNoteScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    /*Из коллекции контента мы отфильтровываем обьекты оставляя толко ContentItem.Text
+                    * и для каждого из нх мы вызываем TextContent*/
+                    currentState.note.content
+                        .filterIsInstance<ContentItem.Text>()
+                        .forEach {contentItem ->
+                        TextContent(
+                            modifier = Modifier.weight(1f),
+                            text = contentItem.content,
+                            onValueChange = {
+                                viewModel.processCommand(EditNoteCommand.InputContent(it))
+                            }
+                        )
 
-                    TextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                            .weight(1f ),
-                        value = currentState.note.content,
-                        onValueChange = {
-                            viewModel.processCommand(EditNoteCommand.InputContent(it))
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-//                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        placeholder = {
-                            Text(
-                                text = "Введите текст...",
-                                fontSize = 24.sp,
-//                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                            )
-                        }
-
-                    )
+                    }
 
                     Button(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
@@ -209,4 +193,41 @@ fun EditNoteScreen(
         EditNoteState.Initial -> {}
     }
 
+}
+
+/*Функция для отображения контента вынесена отдельно для удобства*/
+@Composable
+private fun TextContent(
+    modifier: Modifier = Modifier,
+    text: String,
+    onValueChange: (String) -> Unit
+) {
+    TextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+//            .weight(1f ),
+        value = text,
+        onValueChange = onValueChange,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        textStyle = TextStyle(
+            fontSize = 16.sp,
+//                            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        ),
+        placeholder = {
+            Text(
+                text = "Введите текст...",
+                fontSize = 24.sp,
+//                                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+            )
+        }
+
+    )
 }
