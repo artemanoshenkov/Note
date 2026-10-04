@@ -2,11 +2,14 @@
 
 package com.example.note.presentation.screens.editing
 
-import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -28,21 +30,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.note.domain.ContentItem
+import com.example.note.presentation.modules.Content
+import com.example.note.presentation.screens.creations.CreateNoteCommand
+import com.example.note.presentation.ui.theme.CustomIcons
 import com.example.note.presentation.utils.DateFormatter
 
 @Composable
 fun EditNoteScreen(
     modifier: Modifier = Modifier,
     noteId: Int,
-    viewModel: EditNoteViewModel = hiltViewModel{factory: EditNoteViewModel.Factory ->
+    viewModel: EditNoteViewModel = hiltViewModel { factory: EditNoteViewModel.Factory ->
         /** Для того что бы передать свойство  EditNoteViewModel можно воспользоваться лямда выражением */
         factory.create(idNote = noteId)
     },
@@ -50,6 +53,20 @@ fun EditNoteScreen(
 ) {
     val state = viewModel.state.collectAsState()
     val currentState = state.value
+
+    /*Для открытия галлерии устройства и добавленя картинки*/
+    val imagePicker = rememberLauncherForActivityResult(
+        /*Указывается какой интент отправить или какую активити
+        запустить можем написать сами или использовать готовую*/
+        contract = ActivityResultContracts.GetContent(),
+        /*Возвращает результат, Uri ссылку на изображение*/
+        onResult = { uri ->
+            uri?.let {
+                viewModel.processCommand(EditNoteCommand.AddImage(it))
+            }
+
+        }
+    )
 
     when (currentState) {
         is EditNoteState.Editing -> {
@@ -69,7 +86,20 @@ fun EditNoteScreen(
                         actions = {
                             Icon(
                                 modifier = Modifier
-                                    .padding(start = 16.dp)
+                                    .padding(end = 16.dp)
+                                    .clickable {
+                                        /*При вызове imagePicker.launch передается параметр в качестве
+                                    строки указывающий на то какие обькты нас интересуют (MIME-types)*/
+                                        imagePicker.launch("image/*")
+                                    },
+                                imageVector = CustomIcons.AddPhoto,
+                                contentDescription = "Добавить фото",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Icon(
+                                modifier = Modifier
+                                    .padding(start = 24.dp)
                                     .clickable {
                                         viewModel.processCommand(EditNoteCommand.Delete)
                                     },
@@ -134,7 +164,7 @@ fun EditNoteScreen(
 
                     )
                     Text(
-                        modifier= Modifier.padding(horizontal = 24.dp),
+                        modifier = Modifier.padding(horizontal = 24.dp),
                         text = DateFormatter.formateDateToString(currentState.note.updateAt),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -142,21 +172,26 @@ fun EditNoteScreen(
                     )
                     /*Из коллекции контента мы отфильтровываем обьекты оставляя толко ContentItem.Text
                     * и для каждого из нх мы вызываем TextContent*/
-                    currentState.note.content
-                        .filterIsInstance<ContentItem.Text>()
-                        .forEach {contentItem ->
-                        TextContent(
-                            modifier = Modifier.weight(1f),
-                            text = contentItem.content,
-                            onValueChange = {
-                                viewModel.processCommand(EditNoteCommand.InputContent(it))
-                            }
-                        )
-
-                    }
+                    Content(
+                        modifier = Modifier.weight(1f),
+                        content = currentState.note.content,
+                        onDeleteImageClick = {
+                            viewModel.processCommand(EditNoteCommand.DeleteImage(it))
+                        },
+                        onTextChanged = { index, content ->
+                            viewModel.processCommand(
+                                EditNoteCommand.InputContent(
+                                    content = content,
+                                    index = index
+                                )
+                            )
+                        }
+                    )
 
                     Button(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
 
                         onClick = {
                             viewModel.processCommand(EditNoteCommand.Save)
@@ -171,7 +206,7 @@ fun EditNoteScreen(
                         ),
 
 
-                    ) {
+                        ) {
                         Text(text = "Сохранить")
                     }
 
@@ -195,7 +230,8 @@ fun EditNoteScreen(
 
 }
 
-/*Функция для отображения контента вынесена отдельно для удобства*/
+/*Функция для отображения контента вынесена отдельно для удобства*//*
+
 @Composable
 private fun TextContent(
     modifier: Modifier = Modifier,
@@ -203,7 +239,7 @@ private fun TextContent(
     onValueChange: (String) -> Unit
 ) {
     TextField(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
 //            .weight(1f ),
@@ -230,4 +266,4 @@ private fun TextContent(
         }
 
     )
-}
+}*/
