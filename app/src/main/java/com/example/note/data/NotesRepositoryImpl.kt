@@ -9,10 +9,9 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class NotesRepositoryImpl @Inject constructor(
-    private val notesDao: NotesDao
+    private val notesDao: NotesDao,
+    private val imageFileManager: ImageFileManager
 ) : NotesRepository {
-
-
 
 
     override suspend fun addNewNote(
@@ -24,19 +23,48 @@ class NotesRepositoryImpl @Inject constructor(
         val newNote = Note(
             id = 0,
             title = title,
-            content = content,
+            /*Обрабатываем content для сохранения изображений в Internal Storage*/
+            content = content.processForStorage(),
             updateAt = updateAt,
             isPinned = isPinned
         )
         notesDao.addNote(newNote.toDbModel())
     }
 
+    /*Добавление удаления картинок из Internal Storage при удалении заметки*/
     override suspend fun deleteNote(noteId: Int) {
+        val note = notesDao.getNote(noteId).toEntity()
         notesDao.deleteNote(noteId)
+
+        note.content.filterIsInstance<ContentItem.Image>()
+            .map {
+                it.url
+            }
+            .forEach {
+            imageFileManager.deteImage(it)
+        }
     }
 
+    /*Обновляем функцию добавления редактирования заметки*/
     override suspend fun editNote(note: Note) {
-        notesDao.addNote(note.toDbModel())
+        /*получаем старую заметку из базы данных*/
+        val oldNote = notesDao.getNote(note.id).toEntity()
+        /*из старой замеки получаем список путей до изображений*/
+        val oldListUrls = oldNote.content.filterIsInstance<ContentItem.Image>().map { it.url }
+        /*из новой замеки получаем список путей до изображений*/
+        val newListUrls = note.content.filterIsInstance<ContentItem.Image>().map { it.url }
+        /*возвращает новую коллекцию, содержащую элементы из oldListUrls, которых нет в newListUrls*/
+        val removeUrls = oldListUrls - newListUrls
+        /*удаляем изображения их Internal Storage*/
+        removeUrls.forEach {
+            imageFileManager.deteImage(it)
+        }
+        /*Загружаем новые изображения из External в Internal Storage*/
+        val processedContent = note.content.processForStorage()
+        /*Обновляем контент в редактируемой заметки*/
+        val processNote = note.copy(content = processedContent)
+
+        notesDao.addNote(processNote.toDbModel())
     }
 
     override fun getAllNotes(): Flow<List<Note>> {
@@ -55,20 +83,41 @@ class NotesRepositoryImpl @Inject constructor(
         notesDao.switchPinnedStatus(noteId)
     }
 
-//    companion object {
-//
-//        var instance: NotesRepositoryImpl? = null
-//        private val LOC = Any()
-//
-//        fun getInstance(notesDatabase: NotesDatabase): NotesRepositoryImpl {
-//            instance?.let { return it }
-//
-//            synchronized(LOC) {
-//                instance?.let { return it }
-//
-//                return NotesRepositoryImpl().also {instance = it}
-//            }
-//        }
-//
-//    }
+    /*Добавляем функцию(расширение) для обработки изображения
+    * если ссылка на него есть в Internal storage то ничего не делаем если ее там нет то
+    * копируем изоброжение из External в Internal Storage*/
+    private suspend fun List<ContentItem>.processForStorage(): List<ContentItem> {
+        return map { contentItems ->
+            when (contentItems) {
+                is ContentItem.Image -> {
+                    if (imageFileManager.isInternalStorage(path = contentItems.url)) {
+                        contentItems
+                    } else {
+                        val internalPath =
+                            imageFileManager.copyImageToInternalStorage(contentItems.url)
+                        ContentItem.Image(internalPath)
+                    }
+                }
+
+                is ContentItem.Text -> contentItems
+            }
+        }
+    }
+
+    /*    companion object {
+
+            var instance: NotesRepositoryImpl? = null
+            private val LOC = Any()
+
+            fun getInstance(notesDatabase: NotesDatabase): NotesRepositoryImpl {
+                instance?.let { return it }
+
+                synchronized(LOC) {
+                    instance?.let { return it }
+
+                    return NotesRepositoryImpl().also {instance = it}
+                }
+            }
+
+        }*/
 }
