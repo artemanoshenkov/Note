@@ -7,11 +7,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,17 +34,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.example.note.R
 import com.example.note.domain.ContentItem
 import com.example.note.domain.Note
@@ -217,24 +225,45 @@ fun NotesScreen(
 //        }
 
             state.othersNotes.forEachIndexed { index, note ->
-                /** Для добвления универсальности создадим свою Composable функцию NoteCard
+                /** Для добвления универсальности создадим свою Composable функцию NoteCard и NoteCardWithImage
                  * она позваляет реализовать нужный функционал при взаимодействии с карточкой*/
                 item(key = note.id) {
-                    NoteCard(
-                        modifier = modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                        note = note,
-                        onNoteClick = onNoteClick,
+                    val urlImage = note.content.filterIsInstance<ContentItem.Image>()
+                        .map { it.url }
+                        .firstOrNull()
+                    if (urlImage != null) {
 
-                        onLongClick = {
-                            viewModel.processCommands(NotesCommand.SwitchPinnedStatus(it.id))
-                        },
-                        backgroundColor = OtherNotesColors[index % OtherNotesColors.size],
+                        NoteCardWithImage(
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            note = note,
+                            urlImage = urlImage,
+                            onNoteClick = onNoteClick,
+                            onLongClick = {
+                                viewModel.processCommands(NotesCommand.SwitchPinnedStatus(it.id))
+                            },
+                            backgroundColor = OtherNotesColors[index % OtherNotesColors.size],
+                            )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else {
+                        NoteCard(
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            note = note,
+                            onNoteClick = onNoteClick,
 
-                        )
+                            onLongClick = {
+                                viewModel.processCommands(NotesCommand.SwitchPinnedStatus(it.id))
+                            },
+                            backgroundColor = OtherNotesColors[index % OtherNotesColors.size],
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                 }
 //            Text(
 //                /** clickable {NotesCommand....} реакция на кнопку
@@ -253,6 +282,100 @@ fun NotesScreen(
 
 }
 
+@Composable
+fun NoteCardWithImage(
+    modifier: Modifier = Modifier,
+    note: Note,
+    urlImage: String,
+    backgroundColor: Color,
+    /**получаем возможностиь передачи любого действия при клике на карточку*/
+    onNoteClick: (note: Note) -> Unit,
+    onLongClick: (note: Note) -> Unit,
+) {
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            /** Для того что бы кнопка могла реагировать на разные нажатия используется  combinedClickable*/
+            .combinedClickable(
+                onClick = {
+                    onNoteClick(note)
+                },
+                onLongClick = {
+                    onLongClick(note)
+                },
+
+                )
+
+    ) {
+        Box(
+            modifier = Modifier
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    /*Задаем максимальную высоту заметки*/
+                    .heightIn(max = 120.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    ,
+                model = urlImage,
+                contentDescription = "First image from note",
+                /*Отвечает за расположение и маштабирование картинки в контейнере
+                по умолчанию подстраивается под контейнер*/
+                contentScale = ContentScale.FillWidth
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth().
+                padding(16.dp)
+                    .align(alignment = Alignment.BottomStart)
+            ) {
+                Text(
+
+                    text = note.title,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    maxLines = 1,
+                    /** overflow - отвечает за стратегию что делать если текст вылез за пределы контейнера
+                     * в данном случае добавляет многоточ... */
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+
+                    text = DateFormatter.formateDateToString(note.updateAt),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+        }
+
+        note.content
+            .filterIsInstance<ContentItem.Text>()
+            .filter { it.content.isNotBlank() }
+            .map {
+                it.content
+            }
+            .joinToString("\n")
+            .takeIf { it.isNotBlank() }
+            ?.let {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = it,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 3,
+                    /** overflow - отвечает за стратегию что делать если текст вылез за пределы контейнера
+                     * в данном случае добавляет многоточ... */
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+    }
+
+}
+
+
 // ========== Composable функции для отображения ===========
 /** При создании своиз Composable функий нужно придерживаться правил:
  *  - всегда добавлять Modifier что бы снаружи можно было добавить свои настройки
@@ -267,8 +390,6 @@ fun NoteCard(
     /**получаем возможностиь передачи любого действия при клике на карточку*/
     onNoteClick: (note: Note) -> Unit,
     onLongClick: (note: Note) -> Unit,
-
-
     ) {
 
     Column(
@@ -307,15 +428,18 @@ fun NoteCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+
+
 
 
         note.content
             .filterIsInstance<ContentItem.Text>()
+            .filter { it.content.isNotBlank() }
             .map {
                 it.content
             }
             .joinToString("\n").let {
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = it,
                     fontSize = 16.sp,
@@ -416,5 +540,24 @@ private fun Subtitle(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp
+    )
+}
+
+@Composable
+@Preview
+fun NoteCardPreview() {
+    NoteCardWithImage(
+    note = Note(
+        id = 1,
+        title = "Task 1",
+        content = listOf(ContentItem.Text("Create tasc card"), ContentItem.Image("url for image")),
+
+        updateAt = System.currentTimeMillis(),
+        isPinned = false
+    ),
+        backgroundColor = Color.White,
+        onNoteClick = {},
+        onLongClick = {},
+        urlImage = "url for image"
     )
 }
