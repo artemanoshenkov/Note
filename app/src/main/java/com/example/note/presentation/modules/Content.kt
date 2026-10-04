@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.note.domain.ContentItem
 
-
+/*Composable для отображения контента*/
 /*Выносим функцию с контентом отдельно*/
 @Composable
 fun Content(

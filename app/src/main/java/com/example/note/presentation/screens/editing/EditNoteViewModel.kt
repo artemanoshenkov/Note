@@ -114,7 +114,7 @@ class EditNoteViewModel @AssistedInject constructor(
                     }
                 }
             }
-
+            /*Добавление обработки комманд в viewModel экрана редактирования */
             is EditNoteCommand.DeleteImage -> {
                 _state.update { previousState ->
                     if (previousState is EditNoteState.Editing) {
@@ -129,7 +129,7 @@ class EditNoteViewModel @AssistedInject constructor(
 
                 }
             }
-
+            /*Добавление обработки комманд в viewModel экрана редактирования */
             is EditNoteCommand.AddImage -> {
                 _state.update { previousState ->
                     if (previousState is EditNoteState.Editing) {
@@ -166,6 +166,7 @@ sealed interface EditNoteCommand {
     data object Back : EditNoteCommand
 
     data object Delete : EditNoteCommand
+    /*Добавление комманд для работы с изображениями*/
     data class DeleteImage(val index: Int) : EditNoteCommand
     data class AddImage(val uri: Uri) : EditNoteCommand
 }
