@@ -37,11 +37,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -116,7 +118,7 @@ fun NotesScreen(
         ) {
             item {
                 Title(
-                    text = "Заметки",
+                    text = stringResource(R.string.notes),
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
@@ -244,7 +246,7 @@ fun NotesScreen(
                                 viewModel.processCommands(NotesCommand.SwitchPinnedStatus(it.id))
                             },
                             backgroundColor = OtherNotesColors[index % OtherNotesColors.size],
-                            )
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                     } else {
                         NoteCard(
@@ -317,8 +319,7 @@ fun NoteCardWithImage(
                     /*Задаем максимальную высоту заметки*/
                     .heightIn(max = 120.dp)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    ,
+                    .clip(RoundedCornerShape(8.dp)),
                 model = urlImage,
                 contentDescription = "First image from note",
                 /*Отвечает за расположение и маштабирование картинки в контейнере
@@ -326,8 +327,16 @@ fun NoteCardWithImage(
                 contentScale = ContentScale.FillWidth
             )
             Column(
-                modifier = Modifier.fillMaxWidth().
-                padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    /*Для лучшего отображения цвета можно использовать градиент*/
+                    .background(
+                        brush = Brush.verticalGradient(
+                            listOf<Color>(Color.Transparent, MaterialTheme.colorScheme.onSurface)
+                        )
+                    )
+                    .padding(16.dp)
                     .align(alignment = Alignment.BottomStart)
             ) {
                 Text(
@@ -390,7 +399,7 @@ fun NoteCard(
     /**получаем возможностиь передачи любого действия при клике на карточку*/
     onNoteClick: (note: Note) -> Unit,
     onLongClick: (note: Note) -> Unit,
-    ) {
+) {
 
     Column(
         modifier = modifier
@@ -543,21 +552,3 @@ private fun Subtitle(
     )
 }
 
-@Composable
-@Preview
-fun NoteCardPreview() {
-    NoteCardWithImage(
-    note = Note(
-        id = 1,
-        title = "Task 1",
-        content = listOf(ContentItem.Text("Create tasc card"), ContentItem.Image("url for image")),
-
-        updateAt = System.currentTimeMillis(),
-        isPinned = false
-    ),
-        backgroundColor = Color.White,
-        onNoteClick = {},
-        onLongClick = {},
-        urlImage = "url for image"
-    )
-}
