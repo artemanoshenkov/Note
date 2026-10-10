@@ -7,7 +7,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = arrayOf(NoteDbModel::class),
+    entities = arrayOf(NoteDbModel::class, ContentItemDbModel::class),
     version = 2 /*при обновлении структуры базы данных указываем новую версию "2"
     а при создании базы данных Room.databaseBuilder указываем стратегию (что делать при обновлении версии БД)*/,
     exportSchema = false
