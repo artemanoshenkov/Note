@@ -2,17 +2,18 @@
 
 package com.example.note.data
 
+import ContentItemDbModel
+import ContentType
 import com.example.note.domain.ContentItem
 import com.example.note.domain.Note
 import kotlinx.serialization.json.Json
 
 fun Note.toDbModel(): NoteDbModel {
     /*преобразования коллекции обьектов в строку*/
-    val contentAsString = Json.encodeToString(this.content.toContentItemDbModel())
+    /*val contentAsString = Json.encodeToString(this.content.toContentItemDbModel())*/
     return NoteDbModel(
         id,
         title,
-        contentAsString,
         updateAt,
         isPinned
     )
@@ -20,29 +21,39 @@ fun Note.toDbModel(): NoteDbModel {
 
 /*Сериализация списка с интерфейсом ContentItem в json строку для передачи ее в NoteDbModel
 * который в качестве контента должен содержать Sting для возможности хранения в бд*/
-fun List<ContentItem>.toContentItemDbModel(): List<ContentItemDbModel> {
-    return map { contentItem ->
+fun List<ContentItem>.toContentItemDbModel(noteId: Int): List<ContentItemDbModel> {
+    return mapIndexed { index, contentItem ->
         when (contentItem) {
             is ContentItem.Text -> {
-                ContentItemDbModel.Text(contentItem.content)
+                ContentItemDbModel(
+                    noteId = noteId,
+                    contentType = ContentType.TEXT,
+                    content = contentItem.content,
+                    order = index
+                )
             }
 
             is ContentItem.Image -> {
-                ContentItemDbModel.Image(contentItem.url)
+                ContentItemDbModel(
+                    noteId = noteId,
+                    contentType = ContentType.IMAGE,
+                    content = contentItem.url,
+                    order = index
+                )
             }
         }
     }
 }
 
-fun NoteDbModel.toEntity(): Note {
+fun NoteWithContentDbModel.toEntity(): Note {
     /*Получение коллекции обьектов из строки полученной из БД*/
-    val contentItemDbModel = Json.decodeFromString<List<ContentItemDbModel>>(content)
+/*    val contentItemDbModel = Json.decodeFromString<List<ContentItemDbModel>>(content)*/
     return Note(
-        id,
-        title,
-        contentItemDbModel.toContentItems(),
-        updateAt,
-        isPinned
+        noteDbModel.id,
+        noteDbModel.title,
+        content.toContentItems(),
+        noteDbModel.updateAt,
+        noteDbModel.isPinned
     )
 }
 
@@ -50,20 +61,19 @@ fun NoteDbModel.toEntity(): Note {
 в коллекцию обьектов ContentItem для того что бы domain слой оставался независимым*/
 fun List<ContentItemDbModel>.toContentItems(): List<ContentItem> {
     return map { contentItem ->
-        when (contentItem) {
-            is ContentItemDbModel.Text -> {
+        when (contentItem.contentType) {
+            ContentType.TEXT -> {
                 ContentItem.Text(contentItem.content)
             }
-
-            is ContentItemDbModel.Image -> {
-                ContentItem.Image(contentItem.url)
+            ContentType.IMAGE -> {
+                ContentItem.Image(contentItem.content)
             }
         }
     }
 }
 
 
-fun List<NoteDbModel>.toEntities(): List<Note> {
+fun List<NoteWithContentDbModel>.toEntities(): List<Note> {
     return this.map {
         it.toEntity()
     }

@@ -20,15 +20,20 @@ class NotesRepositoryImpl @Inject constructor(
         updateAt: Long,
         isPinned: Boolean
     ) {
-        val newNote = Note(
+        val processedContent = content.processForStorage()
+        val noteDbModel = NoteDbModel(
             id = 0,
             title = title,
             /*Обрабатываем content для сохранения изображений в Internal Storage*/
-            content = content.processForStorage(),
             updateAt = updateAt,
             isPinned = isPinned
         )
-        notesDao.addNote(newNote.toDbModel())
+
+/*        val noteId = notesDao.addNote(noteDbModel).toInt()
+        val contentItems = processedContent.toContentItemDbModel(noteId = noteId)
+        notesDao.addNoteContent(contentItems)*/
+        notesDao.addNoteWithContent(noteDbModel, content)
+
     }
 
     /*Добавление удаления картинок из Internal Storage при удалении заметки*/
@@ -64,7 +69,13 @@ class NotesRepositoryImpl @Inject constructor(
         /*Обновляем контент в редактируемой заметки*/
         val processNote = note.copy(content = processedContent)
 
-        notesDao.addNote(processNote.toDbModel())
+        /*notesDao.addNote(processNote.toDbModel())
+        notesDao.deleteNoteContent(note.id)
+        notesDao.addNoteContent(processedContent.toContentItemDbModel(note.id))*/
+        notesDao.updateNote(
+            noteDbModel = processNote.toDbModel(),
+            content = processedContent.toContentItemDbModel(processNote.id)
+        )
     }
 
     override fun getAllNotes(): Flow<List<Note>> {

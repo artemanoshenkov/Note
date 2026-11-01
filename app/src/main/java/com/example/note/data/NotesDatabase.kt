@@ -36,7 +36,7 @@ abstract class NotesDatabase : RoomDatabase() {
                     context = context,
                     klass = NotesDatabase::class.java,
                     name = "notes.db"
-
+                    /*при изменении версии БД будет происходить миграция, удаление старых БД и запуск новых*/
                 ).fallbackToDestructiveMigration(dropAllTables = true)
                     /*.fallbackToDestructiveMigration(dropAllTables = true) - миграции не нужно делать просто удалить старую БД и создать новую*/
                     .build().also { instance = it }
